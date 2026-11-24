@@ -82,7 +82,7 @@ Edit `~/.config/claude-notify/config` (see `config.example`):
 | Variable | What it does | Default |
 |---|---|---|
 | `TITLE` | Title of the notification and the dialog | `Claude Code` |
-| `IMAGE` | Image (png/jpg/icns) shown in the notification and the dialog | empty |
+| `IMAGE` | Image (png/jpg/icns) shown in the notification and the dialog | empty: the bundled bell (`assets/default-icon.png`) is used as the icon |
 | `SOUND` | A name from `/System/Library/Sounds`, or `none` | `Glass` |
 | `DIALOG` | Floating dialog, `on`/`off` | `on` |
 | `DIALOG_SECONDS` | Seconds before the dialog closes itself | `8` |

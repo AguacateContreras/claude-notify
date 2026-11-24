@@ -66,7 +66,10 @@ elif [[ "$everywhere" == "add" ]]; then
 fi
 
 echo "Building ClaudeNotify.app..."
-"$repo/helper/build.sh" "$HOME/Applications" "${IMAGE/#\~/$HOME}" >/dev/null
+app_icon="${IMAGE/#\~/$HOME}"
+# No image configured: use the bundled bell so the icon never looks unfinished.
+[[ -n "$app_icon" && -f "$app_icon" ]] || app_icon="$repo/assets/default-icon.png"
+"$repo/helper/build.sh" "$HOME/Applications" "$app_icon" >/dev/null
 # First launch asks macOS for permission: click "Allow".
 open "$HOME/Applications/ClaudeNotify.app" --args --authorize
 
