@@ -33,6 +33,27 @@ Try it:
 ~/.claude/skills/notify/scripts/notify.sh "It works" --subtitle test
 ```
 
+## Optional: get notified in every project
+
+The skill alone lets Claude *decide* when a notification is worth it, so outside a
+project where you asked for it, it may not notify you on its own. If you want Claude to
+always notify you at milestones, no matter which project you are in, install with:
+
+```bash
+./install.sh --everywhere
+```
+
+That adds a short, marked block (see `CLAUDE.snippet.md`) to `~/.claude/CLAUDE.md`, the
+user-level instructions file Claude Code reads in every session. Running it again
+replaces the block instead of adding a second one. To take it out:
+
+```bash
+./install.sh --not-everywhere
+```
+
+Claude still decides what counts as a milestone, so you are not notified after every
+reply. For that, use the `Stop` hook described under *How Claude uses it*.
+
 ## Where it is installed
 
 Everything is installed for your user, not for one project, so every Claude Code
@@ -43,6 +64,7 @@ session on this Mac can use it:
 | `~/.claude/skills/notify` | Symlink to `skills/notify` in this repo (user-level skill) |
 | `~/Applications/ClaudeNotify.app` | The native notification helper |
 | `~/.config/claude-notify/config` | Your settings |
+| `~/.claude/CLAUDE.md` (block) | Only with `--everywhere`: the "notify me" instruction |
 
 ## Update
 
@@ -92,6 +114,7 @@ Optional: if you also want a notification **every time** Claude finishes a reply
 ## Uninstall
 
 ```bash
+./install.sh --not-everywhere   # only if you used --everywhere
 rm ~/.claude/skills/notify
 rm -rf ~/Applications/ClaudeNotify.app ~/.config/claude-notify
 ```
