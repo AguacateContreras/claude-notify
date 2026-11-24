@@ -1,11 +1,19 @@
 # claude-notify
 
-A Claude Code skill for macOS. When Claude finishes a milestone (or gets stuck and
-needs you), it lets you know with:
+A macOS notifier plus a Claude Code skill that uses it. When Claude finishes a
+milestone (or gets stuck and needs you), or when any script of yours calls it, you get:
 
 1. A **sound** (configurable).
 2. A **native notification** that stays in Notification Center, with your image.
 3. A **floating dialog** on top of every window that closes itself.
+
+It has two independent parts:
+
+- **The notifier** (`notifier/`): the `notify` command and a tiny native app. It knows
+  nothing about Claude, so any shell or script can use it:
+  `npm test && notify "Tests green" --subtitle my-project`.
+- **The skill** (`skills/notify/SKILL.md`): plain instructions telling Claude Code to
+  run `notify` at milestones.
 
 The notification is posted by a tiny native app (`ClaudeNotify.app`, ~60 lines of
 Swift) that is compiled on your Mac during install. macOS treats it as a real app, so
@@ -30,7 +38,7 @@ Claude Code* and set the style to *Temporary* or *Persistent* (not *None*).
 Try it:
 
 ```bash
-~/.claude/skills/notify/scripts/notify.sh "It works" --subtitle test
+notify "It works" --subtitle test
 ```
 
 ## Optional: get notified in every project
@@ -61,8 +69,9 @@ session on this Mac can use it:
 
 | Path | What it is |
 |---|---|
-| `~/.claude/skills/notify` | Symlink to `skills/notify` in this repo (user-level skill) |
+| `~/.local/bin/notify` | Symlink to `notifier/notify`: the command (add `~/.local/bin` to your PATH) |
 | `~/Applications/ClaudeNotify.app` | The native notification helper |
+| `~/.claude/skills/notify` | Symlink to `skills/notify` in this repo (user-level skill) |
 | `~/.config/claude-notify/config` | Your settings |
 | `~/.claude/CLAUDE.md` (block) | Only with `--everywhere`: the "notify me" instruction |
 
@@ -72,8 +81,9 @@ session on this Mac can use it:
 cd ~/code/claude-notify && git pull && ./install.sh
 ```
 
-Because the skill is a symlink to this repo, `git pull` updates it. Running
-`./install.sh` again rebuilds the app in case it changed.
+The command and the skill are symlinks to this repo, so `git pull` updates them.
+`./install.sh` rebuilds the app only if its code or icon changed, because every rebuild
+gets a new signature and macOS may ask for the notification permission again.
 
 ## Configure
 
@@ -91,7 +101,7 @@ Edit `~/.config/claude-notify/config` (see `config.example`):
 To change the image, run `./install.sh --image <path>`. It copies the image into
 `~/.config/claude-notify/` and updates the app icon too.
 
-Per call: `notify.sh "<message>" [--title T] [--subtitle S] [--image P] [--no-dialog] [--no-sound]`.
+Per call: `notify "<message>" [--title T] [--subtitle S] [--image P] [--no-dialog] [--no-sound]`.
 
 ## How Claude uses it
 
@@ -106,7 +116,7 @@ Optional: if you also want a notification **every time** Claude finishes a reply
 {
   "hooks": {
     "Stop": [{ "hooks": [{ "type": "command",
-      "command": "~/.claude/skills/notify/scripts/notify.sh \"Done, your turn\" --no-dialog" }] }]
+      "command": "~/.local/bin/notify \"Done, your turn\" --no-dialog" }] }]
   }
 }
 ```
@@ -115,6 +125,6 @@ Optional: if you also want a notification **every time** Claude finishes a reply
 
 ```bash
 ./install.sh --not-everywhere   # only if you used --everywhere
-rm ~/.claude/skills/notify
+rm ~/.claude/skills/notify ~/.local/bin/notify
 rm -rf ~/Applications/ClaudeNotify.app ~/.config/claude-notify
 ```

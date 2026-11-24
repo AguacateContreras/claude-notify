@@ -9,7 +9,7 @@ The user works in other windows, so terminal output goes unseen. When a mileston
 finishes or you need them, run:
 
 ```bash
-~/.claude/skills/notify/scripts/notify.sh "<one line: what finished or what you need>" --subtitle "<project name>"
+~/.local/bin/notify "<one line: what finished or what you need>" --subtitle "<project name>"
 ```
 
 - One short line, in the user's language. Say what is done or what you need, not how.
@@ -21,6 +21,7 @@ finishes or you need them, run:
 - If the Bash sandbox blocks it (nothing appears), rerun with the sandbox disabled;
   it only talks to macOS notification services.
 
-Configuration lives in `~/.config/claude-notify/config` (title, image, sound, dialog
+`notify` is a standalone command from the claude-notify repo (it does not depend on
+Claude). Configuration lives in `~/.config/claude-notify/config` (title, image, sound, dialog
 on/off, dialog seconds). Do not edit it unless the user asks; to change the image the
 user runs `install.sh --image <path>` from the repo, which also refreshes the app icon.

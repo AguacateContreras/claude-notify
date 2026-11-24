@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# notify.sh "<message>" [--title T] [--subtitle S] [--image PATH] [--no-dialog] [--no-sound]
+# notify "<message>" [--title T] [--subtitle S] [--image PATH] [--no-dialog] [--no-sound]
 # Sends a macOS notification that stays in Notification Center, plays a sound and,
 # unless turned off, shows a floating dialog. Defaults come from the config file.
 set -uo pipefail

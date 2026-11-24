@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Installs (or updates) the notify skill for Claude Code on this Mac.
-#   ./install.sh                 install / rebuild with the configured image
-#   ./install.sh --image <path>  set the image (png/jpg/icns) and rebuild
+# Installs (or updates) the notifier and the Claude Code skill on this Mac.
+#   ./install.sh                 install / update
+#   ./install.sh --image <path>  set the image (png/jpg/icns)
 #   ./install.sh --everywhere    also tell Claude, in every project, to notify you
 #                                at milestones (adds a block to ~/.claude/CLAUDE.md)
 #   ./install.sh --not-everywhere  remove that block again
@@ -10,11 +10,12 @@ set -euo pipefail
 repo="$(cd "$(dirname "$0")" && pwd)"
 cfg_dir="$HOME/.config/claude-notify"; cfg="$cfg_dir/config"
 skills="$HOME/.claude/skills"
+bin="$HOME/.local/bin"
 
 [[ "$(uname)" == "Darwin" ]] || { echo "macOS only"; exit 1; }
 command -v swiftc >/dev/null || { echo "Needs Swift: run  xcode-select --install"; exit 1; }
 
-mkdir -p "$cfg_dir" "$skills" "$HOME/Applications"
+mkdir -p "$cfg_dir" "$skills" "$bin" "$HOME/Applications"
 [[ -f "$cfg" ]] || cp "$repo/config.example" "$cfg"
 
 image_arg=""; everywhere=""
@@ -39,7 +40,10 @@ fi
 IMAGE=""; # shellcheck disable=SC1090
 source "$cfg"
 
-# Link the skill so `git pull` in this repo updates it.
+# The notifier: a plain command, usable from any shell or script.
+ln -sfn "$repo/notifier/notify" "$bin/notify"
+
+# The Claude Code skill. Linked so `git pull` in this repo updates it.
 if [[ -e "$skills/notify" && ! -L "$skills/notify" ]]; then
   echo "$skills/notify exists and is not a link; move it away first"; exit 1
 fi
@@ -65,21 +69,31 @@ elif [[ "$everywhere" == "add" ]]; then
   echo "Added the claude-notify block to $claude_md"
 fi
 
-echo "Building ClaudeNotify.app..."
+app="$HOME/Applications/ClaudeNotify.app"
 app_icon="${IMAGE/#\~/$HOME}"
 # No image configured: use the bundled bell so the icon never looks unfinished.
 [[ -n "$app_icon" && -f "$app_icon" ]] || app_icon="$repo/assets/default-icon.png"
-"$repo/helper/build.sh" "$HOME/Applications" "$app_icon" >/dev/null
-# First launch asks macOS for permission: click "Allow".
-open "$HOME/Applications/ClaudeNotify.app" --args --authorize
+# Rebuild only when the code or the icon changed: every rebuild gets a new signature
+# and macOS may then ask for the notification permission again.
+fingerprint="$(cat "$repo/notifier/main.swift" "$repo/notifier/build.sh" "$app_icon" | shasum -a 256 | cut -d' ' -f1)"
+stamp="$cfg_dir/.app-fingerprint"
+if [[ ! -d "$app" || "$(cat "$stamp" 2>/dev/null)" != "$fingerprint" ]]; then
+  echo "Building ClaudeNotify.app..."
+  "$repo/notifier/build.sh" "$HOME/Applications" "$app_icon" >/dev/null
+  echo "$fingerprint" > "$stamp"
+  # Asks macOS for permission the first time: click "Allow".
+  open "$app" --args --authorize
+fi
 
 cat <<MSG
 Done.
-- Skill:   $skills/notify -> $repo/skills/notify
+- Command: $bin/notify -> $repo/notifier/notify
+- App:     $app
 - Config:  $cfg
-- App:     ~/Applications/ClaudeNotify.app
+- Skill:   $skills/notify -> $repo/skills/notify
 If macOS asks, allow notifications for "Claude Code". To keep them in Notification
 Center, set its style to "Persistent" or "Temporary" (not "None") in
 System Settings > Notifications > Claude Code.
-Test:  $skills/notify/scripts/notify.sh "It works" --subtitle test
+Test:  notify "It works" --subtitle test
 MSG
+case ":$PATH:" in *":$bin:"*) ;; *) echo "Add $bin to your PATH to run plain \`notify\`." ;; esac

@@ -1,4 +1,4 @@
-# ~/.config/claude-notify/config — sourced by notify.sh (bash syntax).
+# ~/.config/claude-notify/config — sourced by the notify command (bash syntax).
 TITLE="Claude Code"
 # Image shown in the notification and the dialog (png, jpg or icns). Run
 # `install.sh --image <path>` after changing it so the app icon updates too.
