@@ -5,6 +5,8 @@
 #   ./install.sh --everywhere    also tell Claude, in every project, to notify you
 #                                at milestones (adds a block to ~/.claude/CLAUDE.md)
 #   ./install.sh --not-everywhere  remove that block again
+#   ./install.sh --zsh           add `notify` with tab completion to ~/.zshrc
+#   ./install.sh --no-zsh        remove it from ~/.zshrc
 # Flags can be combined.
 set -euo pipefail
 repo="$(cd "$(dirname "$0")" && pwd)"
@@ -18,12 +20,14 @@ command -v swiftc >/dev/null || { echo "Needs Swift: run  xcode-select --install
 mkdir -p "$cfg_dir" "$skills" "$bin" "$HOME/Applications"
 [[ -f "$cfg" ]] || cp "$repo/config.example" "$cfg"
 
-image_arg=""; everywhere=""
+image_arg=""; everywhere=""; zsh=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --image) image_arg="${2:?--image needs a path}"; shift 2 ;;
     --everywhere) everywhere="add"; shift ;;
     --not-everywhere) everywhere="remove"; shift ;;
+    --zsh) zsh="add"; shift ;;
+    --no-zsh) zsh="remove"; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
@@ -49,24 +53,45 @@ if [[ -e "$skills/notify" && ! -L "$skills/notify" ]]; then
 fi
 ln -sfn "$repo/skills/notify" "$skills/notify"
 
+# Marked blocks in user files, so they can be replaced or removed cleanly.
+# remove_block <file> <begin> <end>
+remove_block() {
+  [[ -f "$1" ]] || return 0
+  awk -v b="$2" -v e="$3" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$1" > "$1.tmp"
+  # Drop the blank lines left at the end so re-adding does not pile them up.
+  perl -0pe 's/\n+\z/\n/' "$1.tmp" > "$1"; rm -f "$1.tmp"
+}
+# add_block <file> <begin> <end> <text>: replaces any older copy instead of stacking.
+add_block() {
+  remove_block "$1" "$2" "$3"
+  touch "$1"
+  [[ -s "$1" ]] && echo >> "$1"
+  printf '%s\n' "$4" >> "$1"
+}
+
 # Optional: a user-level instruction so Claude notifies you in every project.
 claude_md="$HOME/.claude/CLAUDE.md"
-begin="<!-- claude-notify:begin -->"; end="<!-- claude-notify:end -->"
-remove_block() {
-  [[ -f "$claude_md" ]] || return 0
-  awk -v b="$begin" -v e="$end" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$claude_md" > "$claude_md.tmp"
-  # Drop the blank lines left at the end so re-adding does not pile them up.
-  perl -0pe 's/\n+\z/\n/' "$claude_md.tmp" > "$claude_md"; rm -f "$claude_md.tmp"
-}
+md_begin="<!-- claude-notify:begin -->"; md_end="<!-- claude-notify:end -->"
 if [[ "$everywhere" == "remove" ]]; then
-  remove_block
+  remove_block "$claude_md" "$md_begin" "$md_end"
   echo "Removed the claude-notify block from $claude_md"
 elif [[ "$everywhere" == "add" ]]; then
-  remove_block   # replace any older copy instead of stacking them
-  touch "$claude_md"
-  [[ -s "$claude_md" ]] && echo >> "$claude_md"
-  cat "$repo/CLAUDE.snippet.md" >> "$claude_md"
+  # The snippet file already carries its own markers.
+  add_block "$claude_md" "$md_begin" "$md_end" "$(cat "$repo/CLAUDE.snippet.md")"
   echo "Added the claude-notify block to $claude_md"
+fi
+
+# Optional: `notify` with tab completion in zsh, even without ~/.local/bin in PATH.
+zshrc="${ZDOTDIR:-$HOME}/.zshrc"
+zsh_begin="# claude-notify:begin"; zsh_end="# claude-notify:end"
+if [[ "$zsh" == "remove" ]]; then
+  remove_block "$zshrc" "$zsh_begin" "$zsh_end"
+  echo "Removed notify from $zshrc (open a new terminal)"
+elif [[ "$zsh" == "add" ]]; then
+  add_block "$zshrc" "$zsh_begin" "$zsh_end" "$zsh_begin
+source \"$repo/notifier/notify.zsh\"
+$zsh_end"
+  echo "Added notify to $zshrc (open a new terminal, then try: notify --<Tab>)"
 fi
 
 app="$HOME/Applications/ClaudeNotify.app"

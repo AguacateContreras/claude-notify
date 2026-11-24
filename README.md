@@ -74,6 +74,7 @@ session on this Mac can use it:
 | `~/.claude/skills/notify` | Symlink to `skills/notify` in this repo (user-level skill) |
 | `~/.config/claude-notify/config` | Your settings |
 | `~/.claude/CLAUDE.md` (block) | Only with `--everywhere`: the "notify me" instruction |
+| `~/.zshrc` (block) | Only with `--zsh`: `notify` with tab completion |
 
 ## Update
 
@@ -101,7 +102,38 @@ Edit `~/.config/claude-notify/config` (see `config.example`):
 To change the image, run `./install.sh --image <path>`. It copies the image into
 `~/.config/claude-notify/` and updates the app icon too.
 
-Per call: `notify "<message>" [--title T] [--subtitle S] [--image P] [--no-dialog] [--no-sound]`.
+## The `notify` command
+
+```text
+notify "<message>" [options]
+
+  --title T        title of the notification and the dialog
+  --subtitle S     subtitle, e.g. the project name
+  --image PATH     image (png/jpg/icns) for this notification; "" for none
+  --sound NAME     a sound from /System/Library/Sounds (Glass, Ping, Hero...) or none
+  --seconds N      seconds before the dialog closes itself
+  --no-dialog      skip the floating dialog
+  --no-sound       play no sound
+  -h, --help       show the options
+```
+
+Options override the config for that one call. For example:
+
+```bash
+npm test && notify "Tests green" --subtitle my-project --sound Hero --no-dialog
+```
+
+### Optional: zsh integration
+
+```bash
+./install.sh --zsh
+```
+
+Adds a marked block to `~/.zshrc` that loads `notifier/notify.zsh`: `notify` works even
+if `~/.local/bin` is not in your PATH, and `notify --<Tab>` completes the options
+(`--sound <Tab>` lists the system sounds, `--image <Tab>` lists image files). Open a new
+terminal after installing. Running it again does not add a second block. To take it out:
+`./install.sh --no-zsh`.
 
 ## How Claude uses it
 
@@ -124,7 +156,7 @@ Optional: if you also want a notification **every time** Claude finishes a reply
 ## Uninstall
 
 ```bash
-./install.sh --not-everywhere   # only if you used --everywhere
+./install.sh --not-everywhere --no-zsh   # removes the optional blocks, if any
 rm ~/.claude/skills/notify ~/.local/bin/notify
 rm -rf ~/Applications/ClaudeNotify.app ~/.config/claude-notify
 ```

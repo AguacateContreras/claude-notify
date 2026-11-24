@@ -15,7 +15,8 @@ finishes or you need them, run:
 - One short line, in the user's language. Say what is done or what you need, not how.
 - `--subtitle` is the project or repo name (basename of the working directory is fine).
 - Optional: `--title T`, `--image /path/to.png` (overrides the configured image for
-  this one call), `--no-dialog`, `--no-sound`.
+  this one call), `--sound NAME`, `--seconds N`, `--no-dialog`, `--no-sound`.
+  `notify --help` lists them.
 - Run it only at real milestones and when blocked. Never in a loop, never per step.
 - The script returns at once; it never blocks your work.
 - If the Bash sandbox blocks it (nothing appears), rerun with the sandbox disabled;

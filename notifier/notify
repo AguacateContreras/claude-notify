@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# notify "<message>" [--title T] [--subtitle S] [--image PATH] [--no-dialog] [--no-sound]
+# notify "<message>" [options]   (run `notify --help` for the options)
 # Sends a macOS notification that stays in Notification Center, plays a sound and,
 # unless turned off, shows a floating dialog. Defaults come from the config file.
 set -uo pipefail
@@ -16,18 +16,43 @@ APP="$HOME/Applications/ClaudeNotify.app"
 # shellcheck disable=SC1090
 [[ -f "$CONFIG" ]] && source "$CONFIG"
 
-MESSAGE="${1:-Listo}"; shift || true
+usage() {
+  cat <<'HELP'
+Usage: notify "<message>" [options]
+
+Plays a sound, posts a notification that stays in Notification Center and shows a
+floating dialog that closes itself. Defaults come from ~/.config/claude-notify/config.
+
+Options:
+  --title T        title of the notification and the dialog
+  --subtitle S     subtitle, e.g. the project name
+  --image PATH     image (png/jpg/icns) for this notification; "" for none
+  --sound NAME     a sound from /System/Library/Sounds (Glass, Ping, Hero...) or none
+  --seconds N      seconds before the dialog closes itself
+  --no-dialog      skip the floating dialog
+  --no-sound       play no sound
+  -h, --help       show this help
+HELP
+}
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+MESSAGE="${1:-Done}"; shift || true
 SUBTITLE=""
+need() { [[ $# -ge 2 ]] || { echo "notify: $1 needs a value" >&2; exit 64; }; }
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --title) TITLE="$2"; shift 2 ;;
-    --subtitle) SUBTITLE="$2"; shift 2 ;;
-    --image) IMAGE="$2"; shift 2 ;;
+    --title) need "$@"; TITLE="$2"; shift 2 ;;
+    --subtitle) need "$@"; SUBTITLE="$2"; shift 2 ;;
+    --image) need "$@"; IMAGE="$2"; shift 2 ;;
+    --sound) need "$@"; SOUND="$2"; shift 2 ;;
+    --seconds) need "$@"; DIALOG_SECONDS="$2"; shift 2 ;;
     --no-dialog) DIALOG="off"; shift ;;
     --no-sound) SOUND="none"; shift ;;
-    *) shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "notify: unknown option $1 (see notify --help)" >&2; exit 64 ;;
   esac
 done
+[[ "$DIALOG_SECONDS" =~ ^[0-9]+$ ]] || DIALOG_SECONDS=8
 IMAGE="${IMAGE/#\~/$HOME}"
 
 # Escape for an AppleScript string literal.
