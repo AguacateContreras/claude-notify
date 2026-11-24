@@ -1,0 +1,12 @@
+# ~/.config/claude-notify/config — sourced by notify.sh (bash syntax).
+TITLE="Claude Code"
+# Image shown in the notification and the dialog (png, jpg or icns). Run
+# `install.sh --image <path>` after changing it so the app icon updates too.
+IMAGE=""
+# Any name from /System/Library/Sounds (Glass, Ping, Hero, Submarine...) or "none".
+SOUND="Glass"
+# Floating dialog on top of every window: on | off
+DIALOG="on"
+DIALOG_SECONDS=8
+# Notification that stays in Notification Center: on | off
+NOTIFICATION="on"
