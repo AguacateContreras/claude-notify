@@ -32,23 +32,19 @@ cd ~/code/claude-notify
 ```
 
 That's the plain install: the bundled bell icon, and Claude notifies you when it judges
-something is a milestone. To pick options, copy this, delete the lines you don't want
-and edit the values. Every option is optional and they can go in any order. The
-`bash <<'EOF'` wrapper makes bash read the block, so the comments also work in a
-zsh that has `interactivecomments` off.
+something is a milestone. Add the options you want, in any order:
 
 ```bash
-bash <<'EOF'
-opts=(
-  --image ~/Pictures/my-logo.png  # Icon for the notification and the dialog. png, jpg or icns.
-                                  #   [default: the bundled bell]
-  --zsh                           # Load `notify` in ~/.zshrc with tab completion, so it works
-                                  #   even if ~/.local/bin is not in your PATH. [default: off]
-  --everywhere                    # Tell Claude, in every project, to notify you at milestones
-                                  #   (adds a block to ~/.claude/CLAUDE.md). [default: off]
-)
-./install.sh "${opts[@]}"
-EOF
+./install.sh --image ~/Pictures/my-logo.png --zsh --everywhere
+```
+
+```text
+--image <path>   Icon for the notification and the dialog: png, jpg or icns.
+                 [default: the bundled bell]
+--zsh            Load `notify` in ~/.zshrc with tab completion, so it works even if
+                 ~/.local/bin is not in your PATH. [default: off]
+--everywhere     Tell Claude, in every project, to notify you at milestones
+                 (adds a block to ~/.claude/CLAUDE.md). [default: off]
 ```
 
 To undo an option later: `--no-zsh`, `--not-everywhere`. To change the image, run
