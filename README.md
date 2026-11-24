@@ -26,7 +26,7 @@ notification permissions.
 Needs macOS and Swift (run `xcode-select --install` if you don't have it).
 
 ```bash
-git clone git@github.com:AguacateContreras/claude-notify.git ~/code/claude-notify
+git clone https://github.com/AguacateContreras/claude-notify.git ~/code/claude-notify
 cd ~/code/claude-notify
 ./install.sh
 ```
