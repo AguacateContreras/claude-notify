@@ -28,8 +28,35 @@ Needs macOS and Swift (run `xcode-select --install` if you don't have it).
 ```bash
 git clone git@github.com:AguacateContreras/claude-notify.git ~/code/claude-notify
 cd ~/code/claude-notify
-./install.sh --image ~/Pictures/my-logo.png   # or just ./install.sh for no image
+./install.sh
 ```
+
+That's the plain install: the bundled bell icon, and Claude notifies you when it judges
+something is a milestone. To pick options, copy this, delete the lines you don't want
+and edit the values. Every option is optional and they can go in any order. The
+`bash <<'EOF'` wrapper makes bash read the block, so the comments also work in a
+zsh that has `interactivecomments` off.
+
+```bash
+bash <<'EOF'
+opts=(
+  --image ~/Pictures/my-logo.png  # Icon for the notification and the dialog. png, jpg or icns.
+                                  #   [default: the bundled bell]
+  --zsh                           # Load `notify` in ~/.zshrc with tab completion, so it works
+                                  #   even if ~/.local/bin is not in your PATH. [default: off]
+  --everywhere                    # Tell Claude, in every project, to notify you at milestones
+                                  #   (adds a block to ~/.claude/CLAUDE.md). [default: off]
+)
+./install.sh "${opts[@]}"
+EOF
+```
+
+To undo an option later: `--no-zsh`, `--not-everywhere`. To change the image, run
+`./install.sh --image <path>` again. To remove everything: `./install.sh --uninstall`.
+
+Sound, title, the floating dialog and its seconds are not install options. They live in
+`~/.config/claude-notify/config` (see [Configure](#configure)), and changes there apply
+to the next notification, with no reinstall.
 
 The first time, macOS asks whether "Claude Code" may send notifications: click
 **Allow**. To keep them in Notification Center, open *System Settings → Notifications →
