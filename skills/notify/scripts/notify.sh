@@ -55,8 +55,15 @@ else
 fi
 
 if [[ "$DIALOG" == "on" ]]; then
+  # Same picture as the notification: the image, else the app icon. "note" is the
+  # last resort because osascript has no icon of its own and macOS shows a folder.
+  app_icon="$APP/Contents/Resources/AppIcon.icns"
   icon="with icon note"
-  [[ -n "$IMAGE" && -f "$IMAGE" ]] && icon="with icon (POSIX file $(as_str "$IMAGE"))"
+  if [[ -n "$IMAGE" && -f "$IMAGE" ]]; then
+    icon="with icon (POSIX file $(as_str "$IMAGE"))"
+  elif [[ -f "$app_icon" ]]; then
+    icon="with icon (POSIX file $(as_str "$app_icon"))"
+  fi
   dtitle="$TITLE"; [[ -n "$SUBTITLE" ]] && dtitle="$TITLE · $SUBTITLE"
   (osascript -e "display dialog $(as_str "$MESSAGE") with title $(as_str "$dtitle") buttons {\"OK\"} default button \"OK\" $icon giving up after $DIALOG_SECONDS" >/dev/null 2>&1 &)
 fi
