@@ -32,10 +32,13 @@ cd ~/code/claude-notify
 ```
 
 That's the plain install: the bundled bell icon, and Claude notifies you when it judges
-something is a milestone. Add the options you want, in any order:
+something is a milestone. Add the options you want, in any order (one per line; the last line has no `\`):
 
 ```bash
-./install.sh --image ~/Pictures/my-logo.png --zsh --everywhere
+./install.sh \
+  --image ~/Pictures/my-logo.png \
+  --zsh \
+  --everywhere
 ```
 
 ```text
