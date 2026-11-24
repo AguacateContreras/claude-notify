@@ -1,84 +1,95 @@
 # claude-notify
 
-Skill de Claude Code para macOS: cuando Claude termina un milestone (o se atora y te
-necesita) te avisa con:
+A Claude Code skill for macOS. When Claude finishes a milestone (or gets stuck and
+needs you), it lets you know with:
 
-1. **Sonido** (configurable).
-2. **Notificación nativa** que se queda en el Centro de Notificaciones, con tu imagen.
-3. **Diálogo flotante** encima de todas las ventanas, que se cierra solo.
+1. A **sound** (configurable).
+2. A **native notification** that stays in Notification Center, with your image.
+3. A **floating dialog** on top of every window that closes itself.
 
-La notificación la manda un mini app nativo (`ClaudeNotify.app`, Swift, ~60 líneas) que
-se compila en tu Mac al instalar. Así macOS la trata como app propia: aparece como
-"Claude Code", con tu ícono, y se guarda en el stack de notificaciones (cosa que
-`osascript display notification` no hace sin darle permisos a Script Editor).
+The notification is posted by a tiny native app (`ClaudeNotify.app`, ~60 lines of
+Swift) that is compiled on your Mac during install. macOS treats it as a real app, so
+the notification shows up as "Claude Code" with your icon and is kept in Notification
+Center. `osascript display notification` can't do that unless you grant Script Editor
+notification permissions.
 
-## Instalar
+## Install
 
-Requiere macOS y Swift (`xcode-select --install` si no lo tienes).
+Needs macOS and Swift (run `xcode-select --install` if you don't have it).
 
 ```bash
 git clone git@github.com:AguacateContreras/claude-notify.git ~/code/claude-notify
 cd ~/code/claude-notify
-./install.sh --image ~/Pictures/mi-logo.png   # o ./install.sh sin imagen
+./install.sh --image ~/Pictures/my-logo.png   # or just ./install.sh for no image
 ```
 
-La primera vez macOS pregunta si "Claude Code" puede mandar notificaciones: **Permitir**.
-Para que se queden en el stack, en *Ajustes del Sistema → Notificaciones → Claude Code*
-el estilo debe ser *Temporal* o *Persistente* (no *Ninguno*).
+The first time, macOS asks whether "Claude Code" may send notifications: click
+**Allow**. To keep them in Notification Center, open *System Settings → Notifications →
+Claude Code* and set the style to *Temporary* or *Persistent* (not *None*).
 
-Probar:
+Try it:
 
 ```bash
-~/.claude/skills/notify/scripts/notify.sh "Ya quedó" --subtitle prueba
+~/.claude/skills/notify/scripts/notify.sh "It works" --subtitle test
 ```
 
-## Actualizar
+## Where it is installed
+
+Everything is installed for your user, not for one project, so every Claude Code
+session on this Mac can use it:
+
+| Path | What it is |
+|---|---|
+| `~/.claude/skills/notify` | Symlink to `skills/notify` in this repo (user-level skill) |
+| `~/Applications/ClaudeNotify.app` | The native notification helper |
+| `~/.config/claude-notify/config` | Your settings |
+
+## Update
 
 ```bash
 cd ~/code/claude-notify && git pull && ./install.sh
 ```
 
-La skill es un symlink a este repo, así que `git pull` la actualiza; `./install.sh`
-recompila el app por si cambió.
+Because the skill is a symlink to this repo, `git pull` updates it. Running
+`./install.sh` again rebuilds the app in case it changed.
 
-## Configurar
+## Configure
 
-`~/.config/claude-notify/config` (ver `config.example`):
+Edit `~/.config/claude-notify/config` (see `config.example`):
 
-| Variable | Qué hace | Default |
+| Variable | What it does | Default |
 |---|---|---|
-| `TITLE` | Título de la notificación y del diálogo | `Claude Code` |
-| `IMAGE` | Imagen (png/jpg/icns) en la notificación y el diálogo | vacío |
-| `SOUND` | Nombre en `/System/Library/Sounds` o `none` | `Glass` |
-| `DIALOG` | Diálogo flotante `on`/`off` | `on` |
-| `DIALOG_SECONDS` | Segundos antes de que el diálogo se cierre solo | `8` |
-| `NOTIFICATION` | Notificación en el Centro de Notificaciones `on`/`off` | `on` |
+| `TITLE` | Title of the notification and the dialog | `Claude Code` |
+| `IMAGE` | Image (png/jpg/icns) shown in the notification and the dialog | empty |
+| `SOUND` | A name from `/System/Library/Sounds`, or `none` | `Glass` |
+| `DIALOG` | Floating dialog, `on`/`off` | `on` |
+| `DIALOG_SECONDS` | Seconds before the dialog closes itself | `8` |
+| `NOTIFICATION` | Notification Center notification, `on`/`off` | `on` |
 
-Cambiar la imagen: `./install.sh --image <ruta>` (copia la imagen a
-`~/.config/claude-notify/` y actualiza también el ícono del app).
+To change the image, run `./install.sh --image <path>`. It copies the image into
+`~/.config/claude-notify/` and updates the app icon too.
 
-Por llamada: `notify.sh "<mensaje>" [--title T] [--subtitle S] [--image P] [--no-dialog] [--no-sound]`.
+Per call: `notify.sh "<message>" [--title T] [--subtitle S] [--image P] [--no-dialog] [--no-sound]`.
 
-## Cómo lo usa Claude
+## How Claude uses it
 
-La skill (`skills/notify/SKILL.md`) le dice a cualquier Claude Code que la tenga
-instalada que la corra solo en milestones reales o cuando te necesita, con una línea
-que diga qué terminó y el nombre del proyecto como subtítulo. No hace falta tocar el
-`settings.json`.
+The skill (`skills/notify/SKILL.md`) tells any Claude Code that has it installed to run
+it only at real milestones or when it needs you. It sends one line saying what finished,
+with the project name as the subtitle. You don't need to touch `settings.json`.
 
-Opcional, si además quieres aviso **cada vez** que Claude termina de responder, agrega
-un hook `Stop` en `~/.claude/settings.json`:
+Optional: if you also want a notification **every time** Claude finishes a reply, add a
+`Stop` hook to `~/.claude/settings.json`:
 
 ```json
 {
   "hooks": {
     "Stop": [{ "hooks": [{ "type": "command",
-      "command": "~/.claude/skills/notify/scripts/notify.sh \"Terminé, te toca\" --no-dialog" }] }]
+      "command": "~/.claude/skills/notify/scripts/notify.sh \"Done, your turn\" --no-dialog" }] }]
   }
 }
 ```
 
-## Desinstalar
+## Uninstall
 
 ```bash
 rm ~/.claude/skills/notify
