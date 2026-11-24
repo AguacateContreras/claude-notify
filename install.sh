@@ -7,6 +7,7 @@
 #   ./install.sh --not-everywhere  remove that block again
 #   ./install.sh --zsh           add `notify` with tab completion to ~/.zshrc
 #   ./install.sh --no-zsh        remove it from ~/.zshrc
+#   ./install.sh --uninstall     remove everything this installer added
 # Flags can be combined.
 set -euo pipefail
 repo="$(cd "$(dirname "$0")" && pwd)"
@@ -14,13 +15,7 @@ cfg_dir="$HOME/.config/claude-notify"; cfg="$cfg_dir/config"
 skills="$HOME/.claude/skills"
 bin="$HOME/.local/bin"
 
-[[ "$(uname)" == "Darwin" ]] || { echo "macOS only"; exit 1; }
-command -v swiftc >/dev/null || { echo "Needs Swift: run  xcode-select --install"; exit 1; }
-
-mkdir -p "$cfg_dir" "$skills" "$bin" "$HOME/Applications"
-[[ -f "$cfg" ]] || cp "$repo/config.example" "$cfg"
-
-image_arg=""; everywhere=""; zsh=""
+image_arg=""; everywhere=""; zsh=""; uninstall=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --image) image_arg="${2:?--image needs a path}"; shift 2 ;;
@@ -28,9 +23,42 @@ while [[ $# -gt 0 ]]; do
     --not-everywhere) everywhere="remove"; shift ;;
     --zsh) zsh="add"; shift ;;
     --no-zsh) zsh="remove"; shift ;;
+    --uninstall) uninstall=1; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+# Marked blocks in user files, so they can be replaced or removed cleanly.
+# remove_block <file> <begin> <end>
+remove_block() {
+  # Leave the file untouched unless the block is really there.
+  [[ -f "$1" ]] && grep -qxF "$2" "$1" || return 0
+  awk -v b="$2" -v e="$3" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$1" > "$1.tmp"
+  # Drop the blank lines left at the end so re-adding does not pile them up.
+  perl -0pe 's/\n+\z/\n/' "$1.tmp" > "$1"; rm -f "$1.tmp"
+}
+# add_block <file> <begin> <end> <text>: replaces any older copy instead of stacking.
+add_block() {
+  remove_block "$1" "$2" "$3"
+  touch "$1"
+  [[ -s "$1" ]] && echo >> "$1"
+  printf '%s\n' "$4" >> "$1"
+}
+
+if [[ -n "$uninstall" ]]; then
+  remove_block "$HOME/.claude/CLAUDE.md" "<!-- claude-notify:begin -->" "<!-- claude-notify:end -->"
+  remove_block "${ZDOTDIR:-$HOME}/.zshrc" "# claude-notify:begin" "# claude-notify:end"
+  rm -f "$skills/notify" "$bin/notify"
+  rm -rf "$HOME/Applications/ClaudeNotify.app" "$cfg_dir"
+  echo "Uninstalled. This repo folder is still here; delete it if you want."
+  exit 0
+fi
+
+[[ "$(uname)" == "Darwin" ]] || { echo "macOS only"; exit 1; }
+command -v swiftc >/dev/null || { echo "Needs Swift: run  xcode-select --install"; exit 1; }
+
+mkdir -p "$cfg_dir" "$skills" "$bin" "$HOME/Applications"
+[[ -f "$cfg" ]] || cp "$repo/config.example" "$cfg"
 
 if [[ -n "$image_arg" ]]; then
   img="$(cd "$(dirname "$image_arg")" && pwd)/$(basename "$image_arg")"
@@ -52,22 +80,6 @@ if [[ -e "$skills/notify" && ! -L "$skills/notify" ]]; then
   echo "$skills/notify exists and is not a link; move it away first"; exit 1
 fi
 ln -sfn "$repo/skills/notify" "$skills/notify"
-
-# Marked blocks in user files, so they can be replaced or removed cleanly.
-# remove_block <file> <begin> <end>
-remove_block() {
-  [[ -f "$1" ]] || return 0
-  awk -v b="$2" -v e="$3" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$1" > "$1.tmp"
-  # Drop the blank lines left at the end so re-adding does not pile them up.
-  perl -0pe 's/\n+\z/\n/' "$1.tmp" > "$1"; rm -f "$1.tmp"
-}
-# add_block <file> <begin> <end> <text>: replaces any older copy instead of stacking.
-add_block() {
-  remove_block "$1" "$2" "$3"
-  touch "$1"
-  [[ -s "$1" ]] && echo >> "$1"
-  printf '%s\n' "$4" >> "$1"
-}
 
 # Optional: a user-level instruction so Claude notifies you in every project.
 claude_md="$HOME/.claude/CLAUDE.md"

@@ -102,6 +102,12 @@ Edit `~/.config/claude-notify/config` (see `config.example`):
 To change the image, run `./install.sh --image <path>`. It copies the image into
 `~/.config/claude-notify/` and updates the app icon too.
 
+> **Changed the image but the banner still shows the old icon?** Notification Center
+> caches each app's icon and restarting it does not refresh that cache. Log out and
+> back in (or restart the Mac). The dialog and the image inside the banner update at
+> once; only the small app icon on the left waits for the cache. Fresh installs are
+> not affected.
+
 ## The `notify` command
 
 ```text
@@ -155,8 +161,10 @@ Optional: if you also want a notification **every time** Claude finishes a reply
 
 ## Uninstall
 
+Removes the command, the app, the skill, your config and the optional blocks in
+`~/.zshrc` and `~/.claude/CLAUDE.md` (files without the block are left untouched).
+The repo folder stays.
+
 ```bash
-./install.sh --not-everywhere --no-zsh   # removes the optional blocks, if any
-rm ~/.claude/skills/notify ~/.local/bin/notify
-rm -rf ~/Applications/ClaudeNotify.app ~/.config/claude-notify
+./install.sh --uninstall
 ```
